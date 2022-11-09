@@ -3,7 +3,6 @@
  */
 {
   appId: "YourAppID",
-  productName: "YourAppName",
   copyright: "Copyright © 2022 ${author}",
   asar: true,
   directories: {
