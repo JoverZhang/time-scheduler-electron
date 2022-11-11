@@ -1,6 +1,6 @@
 {
   "name": "scheduler-electron",
-  "productName": "Scheduler",
+  "productName": "scheduler-electron",
   "private": true,
   "version": "0.0.1",
   "author": "JoverZhang <joverzh@gmail.com>",
