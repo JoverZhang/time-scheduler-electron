@@ -40,6 +40,7 @@ async function createWindow() {
   win = new BrowserWindow({
     title: 'scheduler-electron',
     icon: join(process.env.PUBLIC, 'favicon.svg'),
+    width: process.env.VITE_DEV_SERVER_URL ? 1200 : undefined,
     webPreferences: {
       preload,
       nodeIntegration: true,
