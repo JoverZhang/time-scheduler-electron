@@ -1,24 +1,30 @@
-import React, { useState } from 'react'
-import styles from 'styles/app.module.scss'
-import { Config, persistent } from '@/common/persistent'
-import Counter from '@/modules/Counter'
-import Selector from '@/modules/Selector'
+import React from 'react'
+import { Button, createTheme, ThemeProvider } from '@mui/material'
+import { Log, useCoreContext } from '@/common/context'
+import TreeNav from '@/modules/TreeNav'
 
-const App: React.FC = () => {
-  const [count, setCount] = useState(0)
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+  },
+})
 
-  let config: Config = persistent.getConfig()
-  persistent.saveConfig(config)
 
-  const options = Object.keys(config)
+export default function App() {
+  const config = useCoreContext()
 
+  const onClick = () => {
+    config.pushLog(new Log(1, 'title', 2, new Date()))
+    config.flush()
+  }
 
   return (
-    <div className={styles.app}>
-      <Selector options={options}></Selector>
-      <Counter config={config}></Counter>
-    </div>
+    <ThemeProvider theme={theme}>
+      <TreeNav config={config} />
+      {
+        config !== undefined && config.logger.logs.map((log, i) => <div key={i}>{JSON.stringify(log)}</div>)
+      }
+      <Button onClick={onClick}>123</Button>
+    </ThemeProvider>
   )
 }
-
-export default App
