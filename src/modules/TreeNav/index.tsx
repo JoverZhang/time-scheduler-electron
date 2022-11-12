@@ -14,6 +14,7 @@ interface TaskTreeItemProps extends TreeItemProps {
 }
 
 const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemProps) => {
+
   const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
     [`& .${treeItemClasses.content}`]: {
       padding: 0,
@@ -22,6 +23,9 @@ const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemPr
       [`& .${treeItemClasses.label}`]: {
         fontWeight: theme.typography.fontWeightMedium,
       },
+    },
+    [`& .started`]: {
+      color: colors.blue[500],
     },
     [`& .${treeItemClasses.expanded} .runtime`]: {
       color: colors.red[500],
@@ -36,7 +40,7 @@ const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemPr
           <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
             {text}
           </Typography>
-          <Typography className="runtime" variant="caption" color="inherit">
+          <Typography className={`runtime ${runtime > 0 ? 'started' : ''}`} variant="caption" color="inherit">
             {expectRuntime - runtime}/{expectRuntime}
           </Typography>
         </Box>

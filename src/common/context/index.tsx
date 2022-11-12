@@ -44,6 +44,13 @@ export class Log {
 
 export class Logger {
   public logs: Log[] = []
+
+  public sumRuntimeByTaskId(taskId: number) {
+    return this.logs
+      .filter(l => l.taskId === taskId)
+      .map(l => l.runtime)
+      .reduce((a, b) => a + b, 0)
+  }
 }
 
 export class Task {
@@ -74,7 +81,7 @@ export class Task {
     if (this.children.length !== 0) {
       return this.children.map(c => c.getRuntime()).reduce((a, b) => a + b, 0)
     }
-    return 0
+    return this.logger.sumRuntimeByTaskId(this.id)
   }
 }
 
