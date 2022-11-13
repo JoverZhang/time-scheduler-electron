@@ -4,7 +4,7 @@
   "private": true,
   "version": "0.0.1",
   "author": "JoverZhang <joverzh@gmail.com>",
-  "description": "Vite React Electron boilerplate.",
+  "description": "Time Scheduler Electron",
   "homepage": "https://www.github.com/JoverZhang/time-scheduler-electron",
   "license": "MIT",
   "main": "dist-electron/electron/main/index.js",
