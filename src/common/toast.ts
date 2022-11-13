@@ -1,6 +1,15 @@
 import { OptionsObject, SnackbarMessage, useSnackbar } from 'notistack'
 
-export const useToast = () => {
+
+interface Toast {
+  success(message: SnackbarMessage, options?: OptionsObject): void
+
+  warning(message: SnackbarMessage, options?: OptionsObject): void
+
+  error(message: SnackbarMessage, options?: OptionsObject): void
+}
+
+export const useToast = (): Toast => {
   const snackbar = useSnackbar()
 
   return {
