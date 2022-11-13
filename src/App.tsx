@@ -12,6 +12,7 @@ import {
   TimelineSeparator,
 } from '@mui/lab'
 import { useToast } from '@/common/toast'
+import { padLeft } from '@/common/utils'
 
 const theme = createTheme({
   palette: {
@@ -49,10 +50,14 @@ export default function App() {
     clearInterval(timer)
     setTimer(null)
 
-    const second = secondCount
+    const minutes = Math.floor(secondCount / 60)
     setSecondCount(0)
-    console.log(second)
-    config.pushLog(new Log(curTask.id, curTask.title, second, new Date()))
+    if (minutes <= 0) {
+      toast.warning('Less than 1 min, not add log')
+      return
+    }
+    toast.success(`Complete ${minutes} Minutes`)
+    config.pushLog(new Log(curTask.id, curTask.title, minutes, new Date()))
     config.flush()
   }
 
@@ -74,9 +79,16 @@ export default function App() {
 
           {/* Control Panel */}
           <Stack alignItems="center">
-            <Typography pt={2} variant="h6">{curTask?.title ?? 'Not Selected'}</Typography>
-            <Typography pt={2} variant="body1">Required Minute: <b>{curTask?.getRequiredTime() ?? 0}</b></Typography>
-            <Typography pt={2} variant="body1">{secondCount}</Typography>
+            <Typography pt={2} variant="h6">
+              {curTask?.title ?? 'Not Selected'}
+            </Typography>
+            <Typography pt={2} variant="body1">
+              Required Minutes: <b>{curTask?.getRequiredTime() ?? 0}</b>
+            </Typography>
+            <Typography pt={2} variant="body1">
+              Started Times: <b>{padLeft(Math.floor(secondCount / 60), 2)}:{padLeft(secondCount % 60, 2)}</b>
+            </Typography>
+
             <Stack mt={3} spacing={2} direction="row">
               <Button
                 disabled={!!timer}
@@ -99,7 +111,7 @@ export default function App() {
           <Stack mt={2}>
             <Timeline position="alternate">
               {
-                logList.map(({ title, endTime }, i) =>
+                logList.map(({ title, endTime, runtime }, i) =>
                   <TimelineItem key={i}>
                     <TimelineOppositeContent color="text.secondary">
                       {endTime.toPrettyString()}
@@ -110,6 +122,8 @@ export default function App() {
                     </TimelineSeparator>
                     <TimelineContent>
                       {title}
+                      <br />
+                      <Typography color="text.secondary">{runtime} min</Typography>
                     </TimelineContent>
                   </TimelineItem>,
                 )
