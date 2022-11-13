@@ -1,11 +1,11 @@
 {
-  "name": "scheduler-electron",
-  "productName": "scheduler-electron",
+  "name": "time-scheduler-electron",
+  "productName": "time-scheduler-electron",
   "private": true,
   "version": "0.0.1",
   "author": "JoverZhang <joverzh@gmail.com>",
   "description": "Vite React Electron boilerplate.",
-  "homepage": "https://www.github.com/JoverZhang/scheduler-electron",
+  "homepage": "https://www.github.com/JoverZhang/time-scheduler-electron",
   "license": "MIT",
   "main": "dist-electron/electron/main/index.js",
   "scripts": {

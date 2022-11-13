@@ -16,7 +16,7 @@ import { app, BrowserWindow, shell, ipcMain } from 'electron'
 import { release } from 'os'
 import { join } from 'path'
 
-process.env.APP_DATA = join(app.getPath('appData'), 'scheduler-electron')
+process.env.APP_DATA = join(app.getPath('appData'), 'time-scheduler-electron')
 
 
 // Disable GPU Acceleration for Windows 7
@@ -38,7 +38,7 @@ const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'scheduler-electron',
+    title: 'time-scheduler-electron',
     icon: join(process.env.PUBLIC, 'favicon.svg'),
     width: process.env.VITE_DEV_SERVER_URL ? 1200 : undefined,
     webPreferences: {
