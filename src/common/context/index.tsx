@@ -6,7 +6,7 @@ import React, { useState } from 'react'
 export enum Category {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
-  UNLIMITED = 'UNLIMITED',
+  LONG_TERM = 'LONG_TERM',
 }
 
 interface PTask {
@@ -58,7 +58,7 @@ export class Task {
   public category: Category
   public title: string
   public children: Task[] = []
-  private requiredTime?: number
+  private readonly requiredTime?: number
 
   private logger: Logger
 
@@ -70,11 +70,15 @@ export class Task {
     this.requiredTime = requiredTime
   }
 
-  public getRequiredTime(): number {
+  public getTotalRequiredTime(): number {
     if (this.children.length !== 0) {
-      return this.children.map(c => c.getRequiredTime()).reduce((a, b) => a + b, 0)
+      return this.children.map(c => c.getTotalRequiredTime()).reduce((a, b) => a + b, 0)
     }
     return this.requiredTime || 0
+  }
+
+  public getRequiredTime(): number {
+    return this.getTotalRequiredTime() - this.getRuntime()
   }
 
   public getRuntime(): number {
@@ -89,7 +93,7 @@ export class Task {
 export class Config {
   public dailyTasks: Task[]
   public weeklyTasks: Task[]
-  public unlimitedTasks: Task[]
+  public longTermTasks: Task[]
 
   public logger: Logger
   public _updater?: Function
@@ -101,20 +105,26 @@ export class Config {
   constructor(config?: Config) {
     // copy constructor
     if (config instanceof Config) {
-      const { dailyTasks, weeklyTasks, unlimitedTasks, logger } = config
+      const { dailyTasks, weeklyTasks, longTermTasks, logger } = config
       this.dailyTasks = dailyTasks
       this.weeklyTasks = weeklyTasks
-      this.unlimitedTasks = unlimitedTasks
+      this.longTermTasks = longTermTasks
       this.logger = logger
       return
     }
 
     // default constructor
-    const { dailyTasks, weeklyTasks, unlimitedTasks, logger } = this.loadFromDisk()
+    const { dailyTasks, weeklyTasks, longTermTasks, logger } = this.loadFromDisk()
     this.dailyTasks = dailyTasks
     this.weeklyTasks = weeklyTasks
-    this.unlimitedTasks = unlimitedTasks
+    this.longTermTasks = longTermTasks
     this.logger = logger
+  }
+
+  public getTaskById(taskId: number): Task | undefined {
+    const tasks = [...this.dailyTasks, ...this.weeklyTasks, ...this.longTermTasks]
+    const map = new Map<number, Task>(tasks.map(t => [t.id, t]))
+    return map.get(taskId)
   }
 
   public pushLog(log: Log) {
@@ -137,12 +147,12 @@ export class Config {
     }
 
     // populate tasks
-    for (const task of [...this.dailyTasks, ...this.weeklyTasks, ...this.unlimitedTasks]) {
+    for (const task of [...this.dailyTasks, ...this.weeklyTasks, ...this.longTermTasks]) {
       let p: PTask = {
         id: task.id,
         category: task.category,
         title: task.title,
-        requiredTime: task.getRequiredTime(),
+        requiredTime: task.getTotalRequiredTime(),
       }
       pconfig.tasks.push(p)
     }
@@ -161,7 +171,7 @@ export class Config {
     fs.writeFileSync(CONFIG, JSON.stringify(pconfig, null, 2))
   }
 
-  protected loadFromDisk(): { dailyTasks: Task[], weeklyTasks: Task[], unlimitedTasks: Task[], logger: Logger } {
+  protected loadFromDisk(): { dailyTasks: Task[], weeklyTasks: Task[], longTermTasks: Task[], logger: Logger } {
     console.warn('load from disk')
     const text = fs.readFileSync(CONFIG)
     const pconfig: PConfig = JSON.parse(text.toString())
@@ -169,7 +179,7 @@ export class Config {
 
     const dailyTasks = []
     const weeklyTasks = []
-    const unlimitedTasks = []
+    const longTermTasks = []
     const logger = new Logger()
 
     // populate logger
@@ -194,8 +204,8 @@ export class Config {
         case Category.WEEKLY:
           weeklyTasks.push(task)
           break
-        case Category.UNLIMITED:
-          unlimitedTasks.push(task)
+        case Category.LONG_TERM:
+          longTermTasks.push(task)
           break
         default:
           throw Error(`unmatch category: ${task.category}`)
@@ -205,7 +215,7 @@ export class Config {
     return {
       dailyTasks,
       weeklyTasks,
-      unlimitedTasks,
+      longTermTasks: longTermTasks,
       logger,
     }
   }
