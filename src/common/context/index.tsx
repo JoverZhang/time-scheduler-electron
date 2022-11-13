@@ -3,6 +3,10 @@ import * as fs from 'fs'
 import React, { useState } from 'react'
 
 
+const APP_DATA = process.env.APP_DATA as string
+const CONFIG = path.join(APP_DATA, 'config.json')
+
+
 export enum Category {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
@@ -220,10 +224,6 @@ export class Config {
     }
   }
 }
-
-
-const APP_DATA = process.env.APP_DATA as string
-const CONFIG = path.join(APP_DATA, 'config.json')
 
 
 // single instance
