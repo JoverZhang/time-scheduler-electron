@@ -109,3 +109,9 @@ ipcMain.handle('open-win', (event, arg) => {
     // childWindow.webContents.openDevTools({ mode: "undocked", activate: true })
   }
 })
+
+
+/// customize ipc
+ipcMain.on('app-force', (event, args) => {
+  app.focus(args)
+})
