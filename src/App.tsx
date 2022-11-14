@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button, createTheme, Grid, Stack, ThemeProvider, Typography } from '@mui/material'
+import { Button, createTheme, Grid, Stack, TextField, ThemeProvider, Typography } from '@mui/material'
 import { Log, Task, useCoreContext } from '@/common/context'
 import TreeNav from '@/modules/TreeNav'
 import {
@@ -23,12 +23,22 @@ const theme = createTheme({
 })
 
 
+enum State {
+  IDLE,
+  TASK_SELECTED,
+  STARTED,
+  STOPPED,
+}
+
+
 const sec2Min = (sec: number): number => {
   return Math.floor(sec / 60)
 }
 
 export default function App() {
   const toast = useToast()
+
+  const [state, setState] = useState(State.IDLE)
 
   const config = useCoreContext()
   const logList = config.logger.logs.slice(0, 10)
@@ -37,17 +47,17 @@ export default function App() {
   const [startedTimes, setStartedTimes] = useState<number>(0)
   const [timer, setTimer] = useState<number | null>(null)
 
+
   const onTaskSelect = (task: Task) => {
     setCurTask(task)
+    setState(State.TASK_SELECTED)
   }
 
-
   const onStart = () => {
-    if (!curTask) {
-      toast.warning('Please select a task first')
-      return
-    }
+    if (!curTask) throw new Error()
     let c = 0
+
+    // add timer
     setTimer(window.setInterval(() => {
 
       // increment startedTimes
@@ -63,21 +73,41 @@ export default function App() {
 
         return old + 1
       })
-    }, 50))
+    }, 1000))
+
+    setState(State.STARTED)
   }
 
   const onStop = () => {
     if (!curTask || !timer) return
+    // clear timer
     clearInterval(timer)
     setTimer(null)
 
     const minutes = sec2Min(startedTimes)
+    if (minutes > 0) {
+      toast.success(`Complete ${minutes} Minutes`)
+    } else {
+      toast.warning('Less than 1 min')
+    }
+
+    setState(State.STOPPED)
+  }
+
+  const onRevise = () => {
+    if (!curTask) return
+    setState(State.TASK_SELECTED)
+
+    const minutes = sec2Min(startedTimes)
     setStartedTimes(0)
     if (minutes === 0) {
-      toast.warning('Less than 1 min, not add log')
+      toast.warning('Nothing to do')
       return
     }
-    toast.success(`Complete ${minutes} Minutes`)
+
+    toast.success(`Complete ${minutes} Minutes for ${curTask.title}`)
+
+    // update config
     config.pushLog(new Log(curTask.id, curTask.title, minutes, new Date()))
     config.flush()
   }
@@ -89,7 +119,7 @@ export default function App() {
 
         <Grid item xs={5}>
           <TreeNav
-            disableSelection={!!timer}
+            disableSelection={state > State.TASK_SELECTED}
             sx={{ minHeight: '100vh', maxHeight: '100vh', overflowY: 'auto' }}
             config={config}
             onTaskSelect={onTaskSelect}
@@ -107,19 +137,39 @@ export default function App() {
               Required Minutes: <b>{curTask?.getRequiredTime() ?? 0}</b>
             </Typography>
             <Typography pt={2} variant="body1">
-              Started Times: <b>{padLeft(sec2Min(startedTimes), 2)}:{padLeft(startedTimes % 60, 2)}</b>
+              Started Times: <b>{padLeft(sec2Min(startedTimes), 2)}:{padLeft(Math.abs(startedTimes % 60), 2)}</b>
             </Typography>
+
+            <Stack mt={2} spacing={2} direction="row">
+              <TextField
+                disabled={state !== State.STOPPED}
+                label="Seconds"
+                type="number"
+                variant="outlined"
+                value={startedTimes}
+                onChange={e => {
+                  setStartedTimes(parseInt(e.target.value) || 0)
+                }}
+              />
+              <Button
+                disabled={state !== State.STOPPED}
+                variant="outlined"
+                color="info"
+                onClick={onRevise}
+              >REVISE
+              </Button>
+            </Stack>
 
             <Stack mt={3} spacing={2} direction="row">
               <Button
-                disabled={!!timer}
+                disabled={state !== State.TASK_SELECTED}
                 variant="outlined"
                 color="success"
                 onClick={onStart}
               >START
               </Button>
               <Button
-                disabled={!timer}
+                disabled={state !== State.STARTED}
                 variant="outlined"
                 color="error"
                 onClick={onStop}
@@ -146,8 +196,7 @@ export default function App() {
                       <br />
                       <Typography color="text.secondary">{runtime} min</Typography>
                     </TimelineContent>
-                  </TimelineItem>,
-                )
+                  </TimelineItem>)
               }
             </Timeline>
           </Stack>
