@@ -36,16 +36,15 @@ Log : Date    createdAt
 
 
 RawTask --> CategoryEnum
-RawTask : number        id
-RawTask : CategoryEnum  category
-RawTask : number        timeRequired
-RawTask : Date          createdAt
+RawTask : number  id
+RawTask : string  category
+RawTask : number  timeRequired
+RawTask : string  createdAt
 
 RawLog --> RawTask
 RawLog : number taskId
 RawLog : number duration
-RawLog : Date   createdAt
-
+RawLog : string createdAt
 ```
 
 
