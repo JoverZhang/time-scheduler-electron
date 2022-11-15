@@ -38,13 +38,26 @@ const sec2Min = (sec: number): number => {
 export default function App() {
   const toast = useToast()
 
+
   const [state, setState] = useState(State.IDLE)
 
-
-  // context
   const [context, setContext] = useState<Context | null>(null)
+  const [curTask, setCurTask] = useState<Task | null>(null)
 
-  const getContext = async () => {
+
+  const [secondsStarted, setSecondsStarted] = useState<number>(0)
+  const [timer, setTimer] = useState<number | null>(null)
+
+  const logs = context?.logs.slice(0, 10) ?? []
+
+
+  useEffect(() => {
+    (async () => {
+      await updateContext()
+    })()
+  }, [])
+
+  async function updateContext() {
     try {
       const context = await contextApi.getContext()
       setContext(context)
@@ -53,18 +66,6 @@ export default function App() {
     }
   }
 
-  useEffect(() => {
-    (async () => {
-      await getContext()
-    })()
-  }, [])
-
-
-  const logList = context?.logs.slice(0, 10) ?? []
-
-  const [curTask, setCurTask] = useState<Task | null>(null)
-  const [startedTimes, setStartedTimes] = useState<number>(0)
-  const [timer, setTimer] = useState<number | null>(null)
 
   const onTaskSelect = (task: Task) => {
     setCurTask(task)
@@ -78,18 +79,18 @@ export default function App() {
     // add timer
     setTimer(window.setInterval(() => {
 
-      // increment startedTimes
-      setStartedTimes(old => {
+      // increment secondsStarted
+      setSecondsStarted(startedTimes => {
 
         // when completed, notice every minute
-        if (sec2Min(old) >= curTask.timeRequired &&
+        if (sec2Min(startedTimes) >= curTask.timeRequired &&
           c++ % 60 === 0) {
           const n = new Notification(`Time Scheduler`, { body: `Task "${curTask.title}" is completed` })
           n.onclick = () => ipc.ipcAppForce()
           n.onclose = () => ipc.ipcAppForce()
         }
 
-        return old + 1
+        return startedTimes + 1
       })
     }, 1000))
 
@@ -102,7 +103,7 @@ export default function App() {
     clearInterval(timer)
     setTimer(null)
 
-    const minutes = sec2Min(startedTimes)
+    const minutes = sec2Min(secondsStarted)
     if (minutes > 0) {
       toast.success(`Complete ${minutes} Minutes`)
     } else {
@@ -116,28 +117,31 @@ export default function App() {
     if (!curTask) return
     setState(State.TASK_SELECTED)
 
-    const minutes = sec2Min(startedTimes)
-    setStartedTimes(0)
-    if (minutes === 0) {
+    const duration = sec2Min(secondsStarted)
+    setSecondsStarted(0)
+    if (duration === 0) {
       toast.warning('Nothing to do')
       return
     }
 
-    toast.success(`Complete ${minutes} Minutes for ${curTask.title}`)
+    toast.success(`Complete ${duration} Minutes for ${curTask.title}`)
 
-    // update context
+    // push log to context
     await contextApi.pushLog({
       task: curTask,
-      duration: minutes,
+      duration,
       createdAt: new Date(),
     })
+    await updateContext()
   }
+
 
   return (
     <ThemeProvider theme={theme}>
 
       <Grid container spacing={0}>
 
+        {/* Navigation */}
         <Grid item xs={5}>
           {!!context &&
             <TreeNav
@@ -149,18 +153,19 @@ export default function App() {
           }
         </Grid>
 
+        {/* Control Panel */}
         <Grid item xs={7} sx={{ minHeight: '100vh', maxHeight: '100vh', overflowY: 'auto' }}>
 
-          {/* Control Panel */}
+          {/* Main Panel */}
           <Stack alignItems="center">
-            <Typography pt={2} variant="h6">
-              {curTask?.title ?? 'Not Selected'}
+            <Typography pt={2} variant="h5">
+              {`< ${curTask?.title ?? 'No Task Selected'} >`}
             </Typography>
             <Typography pt={2} variant="body1">
-              Required Minutes: <b>{curTask ? curTask.timeRequired - curTask.duration : 0}</b>
+              Required: <b>{curTask ? curTask.timeRequired - curTask.duration : 0}</b> min
             </Typography>
             <Typography pt={2} variant="body1">
-              Started Times: <b>{padLeft(sec2Min(startedTimes), 2)}:{padLeft(Math.abs(startedTimes % 60), 2)}</b>
+              Started: <b>{padLeft(sec2Min(secondsStarted), 2)}:{padLeft(Math.abs(secondsStarted % 60), 2)}</b>
             </Typography>
 
             <Stack mt={2} spacing={2} direction="row">
@@ -169,9 +174,9 @@ export default function App() {
                 label="Seconds"
                 type="number"
                 variant="outlined"
-                value={startedTimes}
+                value={secondsStarted}
                 onChange={e => {
-                  setStartedTimes(parseInt(e.target.value) || 0)
+                  setSecondsStarted(parseInt(e.target.value) || 0)
                 }}
               />
               <Button
@@ -201,11 +206,11 @@ export default function App() {
             </Stack>
           </Stack>
 
-          {/* Log Timeline Window */}
+          {/* Log Timeline */}
           <Stack mt={2}>
             <Timeline position="alternate">
               {
-                logList.map(({ task, duration, createdAt }, i) =>
+                logs.map(({ task, duration, createdAt }, i) =>
                   <TimelineItem key={i}>
                     <TimelineOppositeContent color="text.secondary">
                       {createdAt.toPrettyString()}
@@ -223,6 +228,7 @@ export default function App() {
               }
             </Timeline>
           </Stack>
+
         </Grid>
 
       </Grid>

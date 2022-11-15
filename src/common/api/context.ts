@@ -105,10 +105,10 @@ function convertToContext(raw: Raw): [LocalException | null, Context] {
 
     let logList = logsMap.get(log.task.id)
     if (!logList) {
-      logList = []
-      logsMap.set(log.task.id, logList)
+      logsMap.set(log.task.id, [log])
+    } else {
+      logList.push(log)
     }
-    logList.push(log)
 
     context.logs.push(log)
   }
