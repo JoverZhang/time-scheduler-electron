@@ -1,6 +1,5 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button, createTheme, Grid, Stack, TextField, ThemeProvider, Typography } from '@mui/material'
-import { Log, Task, useCoreContext } from '@/common/context'
 import TreeNav from '@/modules/TreeNav'
 import {
   Timeline,
@@ -14,6 +13,7 @@ import {
 import ipc from '@/common/ipc'
 import { useToast } from '@/common/toast'
 import { padLeft } from '@/common/utils'
+import contextApi, { Context, Task } from '@/common/api/context'
 
 
 const theme = createTheme({
@@ -40,13 +40,31 @@ export default function App() {
 
   const [state, setState] = useState(State.IDLE)
 
-  const config = useCoreContext()
-  const logList = config.logger.logs.slice(0, 10)
+
+  // context
+  const [context, setContext] = useState<Context | null>(null)
+
+  const getContext = async () => {
+    try {
+      const context = await contextApi.getContext()
+      setContext(context)
+    } catch (e) {
+      e instanceof Error && toast.error(e.message)
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      await getContext()
+    })()
+  }, [])
+
+
+  const logList = context?.logs.slice(0, 10) ?? []
 
   const [curTask, setCurTask] = useState<Task | null>(null)
   const [startedTimes, setStartedTimes] = useState<number>(0)
   const [timer, setTimer] = useState<number | null>(null)
-
 
   const onTaskSelect = (task: Task) => {
     setCurTask(task)
@@ -64,7 +82,7 @@ export default function App() {
       setStartedTimes(old => {
 
         // when completed, notice every minute
-        if (sec2Min(old) >= curTask.getRequiredTime() &&
+        if (sec2Min(old) >= curTask.timeRequired &&
           c++ % 60 === 0) {
           const n = new Notification(`Time Scheduler`, { body: `Task "${curTask.title}" is completed` })
           n.onclick = () => ipc.ipcAppForce()
@@ -94,7 +112,7 @@ export default function App() {
     setState(State.STOPPED)
   }
 
-  const onRevise = () => {
+  const onRevise = async () => {
     if (!curTask) return
     setState(State.TASK_SELECTED)
 
@@ -107,9 +125,12 @@ export default function App() {
 
     toast.success(`Complete ${minutes} Minutes for ${curTask.title}`)
 
-    // update config
-    config.pushLog(new Log(curTask.id, curTask.title, minutes, new Date()))
-    config.flush()
+    // update context
+    await contextApi.pushLog({
+      task: curTask,
+      duration: minutes,
+      createdAt: new Date(),
+    })
   }
 
   return (
@@ -118,12 +139,14 @@ export default function App() {
       <Grid container spacing={0}>
 
         <Grid item xs={5}>
-          <TreeNav
-            disableSelection={state > State.TASK_SELECTED}
-            sx={{ minHeight: '100vh', maxHeight: '100vh', overflowY: 'auto' }}
-            config={config}
-            onTaskSelect={onTaskSelect}
-          />
+          {!!context &&
+            <TreeNav
+              disableSelection={state > State.TASK_SELECTED}
+              sx={{ minHeight: '100vh', maxHeight: '100vh', overflowY: 'auto' }}
+              context={context}
+              onTaskSelect={onTaskSelect}
+            />
+          }
         </Grid>
 
         <Grid item xs={7} sx={{ minHeight: '100vh', maxHeight: '100vh', overflowY: 'auto' }}>
@@ -134,7 +157,7 @@ export default function App() {
               {curTask?.title ?? 'Not Selected'}
             </Typography>
             <Typography pt={2} variant="body1">
-              Required Minutes: <b>{curTask?.getRequiredTime() ?? 0}</b>
+              Required Minutes: <b>{curTask ? curTask.timeRequired - curTask.duration : 0}</b>
             </Typography>
             <Typography pt={2} variant="body1">
               Started Times: <b>{padLeft(sec2Min(startedTimes), 2)}:{padLeft(Math.abs(startedTimes % 60), 2)}</b>
@@ -182,19 +205,19 @@ export default function App() {
           <Stack mt={2}>
             <Timeline position="alternate">
               {
-                logList.map(({ title, endTime, runtime }, i) =>
+                logList.map(({ task, duration, createdAt }, i) =>
                   <TimelineItem key={i}>
                     <TimelineOppositeContent color="text.secondary">
-                      {endTime.toPrettyString()}
+                      {createdAt.toPrettyString()}
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                       <TimelineDot />
                       <TimelineConnector />
                     </TimelineSeparator>
                     <TimelineContent>
-                      {title}
+                      {task.title}
                       <br />
-                      <Typography color="text.secondary">{runtime} min</Typography>
+                      <Typography color="text.secondary">{duration} min</Typography>
                     </TimelineContent>
                   </TimelineItem>)
               }

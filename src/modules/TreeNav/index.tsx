@@ -3,9 +3,9 @@ import { Box, colors, styled, Typography } from '@mui/material'
 import { TreeItem, treeItemClasses, TreeItemProps, TreeView } from '@mui/lab'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ChevronRightIcon from '@mui/icons-material/ChevronRight'
-import { Config, Task } from '@/common/context'
 import Label from '@mui/icons-material/Label'
 import { SingleSelectTreeViewProps } from '@mui/lab/TreeView/TreeView'
+import { Context, Task } from '@/common/api/context'
 
 
 interface TaskTreeItemProps extends TreeItemProps {
@@ -52,31 +52,31 @@ const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemPr
 }
 
 interface Props extends SingleSelectTreeViewProps {
-  config: Config
+  context: Context
   onTaskSelect: (task: Task) => void
 }
 
-export default function TreeNav({ config, onTaskSelect, ...other }: Props) {
+export default function TreeNav({ context, onTaskSelect, ...other }: Props) {
 
   const calcSum = <T, >(arr: T[], cb: (t: T) => number): number => arr.map(v => cb(v)).reduce((a, b) => a + b, 0)
   const categoryList = [
     {
       id: 'daily',
       text: 'Daily',
-      tasks: config.dailyTasks,
+      tasks: context.dailyTasks,
     }, {
       id: 'weekly',
       text: 'Weekly',
-      tasks: config.weeklyTasks,
+      tasks: context.weeklyTasks,
     }, {
       id: 'longTerm',
       text: 'Long Term',
-      tasks: config.longTermTasks,
+      tasks: context.longTermTasks,
     },
   ]
 
   const nodeSelect = (_: SyntheticEvent, node: string) => {
-    const task = config.getTaskById(Number(node))
+    const task = context.taskMap.get(Number(node))
     if (task) {
       onTaskSelect(task)
     }
@@ -95,8 +95,8 @@ export default function TreeNav({ config, onTaskSelect, ...other }: Props) {
             key={id}
             nodeId={id}
             text={text}
-            runtime={calcSum(tasks, t => t.getRuntime())}
-            expectRuntime={calcSum(tasks, t => t.getTotalRequiredTime())}
+            runtime={calcSum(tasks, t => t.duration)}
+            expectRuntime={calcSum(tasks, t => t.timeRequired)}
           >
             {
               tasks.map(task =>
@@ -104,8 +104,8 @@ export default function TreeNav({ config, onTaskSelect, ...other }: Props) {
                   key={task.id}
                   nodeId={task.id.toString()}
                   text={task.title}
-                  runtime={task.getRuntime()}
-                  expectRuntime={task.getTotalRequiredTime()}
+                  runtime={task.duration}
+                  expectRuntime={task.timeRequired}
                 />)
             }
           </TaskTreeItem>)
