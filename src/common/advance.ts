@@ -1,3 +1,5 @@
+import { padLeft } from '@/common/utils'
+
 export {}
 declare global {
   interface Date {
@@ -6,11 +8,11 @@ declare global {
 }
 
 Date.prototype.toPrettyString = function (): string {
-  const year = this.getFullYear()
-  const month = this.getMonth() + 1
-  const date = this.getDate()
-  const hours = this.getHours()
-  const minutes = this.getMinutes()
-  const seconds = this.getSeconds()
+  const year = padLeft(this.getFullYear(), 4)
+  const month = padLeft(this.getMonth() + 1, 2)
+  const date = padLeft(this.getDate(), 2)
+  const hours = padLeft(this.getHours(), 2)
+  const minutes = padLeft(this.getMinutes(), 2)
+  const seconds = padLeft(this.getSeconds(), 2)
   return `${year}-${month}-${date} ${hours}:${minutes}:${seconds}`
 }
