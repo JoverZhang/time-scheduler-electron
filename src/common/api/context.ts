@@ -4,7 +4,7 @@ import { LocalException } from '@/common/exception'
 
 
 const APP_DATA = process.env.APP_DATA as string
-const CONFIG_PATH = path.join(APP_DATA, 'config2.json')
+const CONFIG_PATH = path.join(APP_DATA, 'config.json')
 
 
 enum CategoryEnum {

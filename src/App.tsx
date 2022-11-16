@@ -170,53 +170,56 @@ export default function App() {
               Started: <b>{padLeft(sec2Min(secondsStarted), 2)}:{padLeft(Math.abs(secondsStarted % 60), 2)}</b>
             </Typography>
 
-            <Stack mt={2} spacing={2} direction="row">
-              <TextField
-                disabled={state !== State.STOPPED}
-                label="Remarks"
-                type="text"
-                variant="outlined"
-                value={remarks}
-                onChange={e => {
-                  setRemarks(e.target.value)
-                }}
-              />
-              <TextField
-                sx={{ width: 100 }}
-                disabled={state !== State.STOPPED}
-                label="Seconds"
-                type="number"
-                variant="outlined"
-                value={secondsStarted}
-                onChange={e => {
-                  setSecondsStarted(parseInt(e.target.value) || 0)
-                }}
-              />
-              <Button
-                disabled={state !== State.STOPPED}
-                variant="outlined"
-                color="info"
-                onClick={onRevise}
-              >REVISE
-              </Button>
-            </Stack>
+            {
+              state === State.STOPPED &&
+              <Stack mt={2} spacing={2} direction="row">
+                <TextField
+                  label="Remarks"
+                  type="text"
+                  variant="outlined"
+                  value={remarks}
+                  onChange={e => {
+                    setRemarks(e.target.value)
+                  }}
+                />
+                <TextField
+                  sx={{ width: 100 }}
+                  label="Seconds"
+                  type="number"
+                  variant="outlined"
+                  value={secondsStarted}
+                  onChange={e => {
+                    setSecondsStarted(parseInt(e.target.value) || 0)
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  color="info"
+                  onClick={onRevise}
+                >REVISE
+                </Button>
+              </Stack>
+            }
 
-            <Stack mt={3} spacing={2} direction="row">
-              <Button
-                disabled={state !== State.TASK_SELECTED}
-                variant="outlined"
-                color="success"
-                onClick={onStart}
-              >START
-              </Button>
-              <Button
-                disabled={state !== State.STARTED}
-                variant="outlined"
-                color="error"
-                onClick={onStop}
-              >STOP
-              </Button>
-            </Stack>
+            {
+              [State.TASK_SELECTED, State.STARTED].includes(state) &&
+              <Stack mt={3} spacing={2} direction="row">
+                <Button
+                  disabled={state !== State.TASK_SELECTED}
+                  variant="outlined"
+                  color="success"
+                  onClick={onStart}
+                >START
+                </Button>
+                <Button
+                  disabled={state !== State.STARTED}
+                  variant="outlined"
+                  color="error"
+                  onClick={onStop}
+                >STOP
+                </Button>
+              </Stack>
+            }
           </Stack>
 
           {/* Log Timeline */}
