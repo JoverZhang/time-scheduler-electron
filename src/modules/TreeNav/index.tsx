@@ -10,11 +10,11 @@ import { Context, Task } from '@/common/api/context'
 
 interface TaskTreeItemProps extends TreeItemProps {
   text: string
-  runtime: number
-  expectRuntime: number
+  duration: number
+  timeRequired: number
 }
 
-const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemProps) => {
+const TaskTreeItem = ({ text, duration, timeRequired, ...other }: TaskTreeItemProps) => {
 
   const StyledTreeItem = styled(TreeItem)(({ theme }) => ({
     [`& .${treeItemClasses.content}`]: {
@@ -28,8 +28,8 @@ const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemPr
     [`& .started`]: {
       color: colors.blue[500],
     },
-    [`& .${treeItemClasses.expanded} .runtime`]: {
-      color: colors.red[500],
+    [`& .${treeItemClasses.expanded} .duration`]: {
+      fontWeight: 'bold',
     },
   }))
 
@@ -38,11 +38,16 @@ const TaskTreeItem = ({ text, runtime, expectRuntime, ...other }: TaskTreeItemPr
       label={
         <Box sx={{ display: 'flex', alignItems: 'center', p: 0.5, pr: 1 }}>
           <Box component={Label} color="inherit" sx={{ mr: 2 }} />
-          <Typography variant="body2" sx={{ fontWeight: 'inherit', flexGrow: 1 }}>
-            {text}
+          <Typography
+            variant="body2"
+            sx={{ fontWeight: 'inherit', flexGrow: 1 }}
+          >{text}
           </Typography>
-          <Typography className={`runtime ${runtime > 0 ? 'started' : ''}`} variant="caption" color="inherit">
-            {expectRuntime - runtime}/{expectRuntime}
+          <Typography
+            className={`duration ${duration > 0 ? 'started' : ''}`}
+            variant="caption"
+            color="inherit"
+          >{timeRequired - duration}/{timeRequired}
           </Typography>
         </Box>
       }
@@ -95,8 +100,8 @@ export default function TreeNav({ context, onTaskSelect, ...other }: Props) {
             key={id}
             nodeId={id}
             text={text}
-            runtime={calcSum(tasks, t => t.duration)}
-            expectRuntime={calcSum(tasks, t => t.timeRequired)}
+            duration={calcSum(tasks, t => t.duration)}
+            timeRequired={calcSum(tasks, t => t.timeRequired)}
           >
             {
               tasks.map(task =>
@@ -104,8 +109,8 @@ export default function TreeNav({ context, onTaskSelect, ...other }: Props) {
                   key={task.id}
                   nodeId={task.id.toString()}
                   text={task.title}
-                  runtime={task.duration}
-                  expectRuntime={task.timeRequired}
+                  duration={task.duration}
+                  timeRequired={task.timeRequired}
                 />)
             }
           </TaskTreeItem>)
