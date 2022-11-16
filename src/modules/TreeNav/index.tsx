@@ -25,13 +25,15 @@ const TaskTreeItem = ({ text, duration, timeRequired, ...other }: TaskTreeItemPr
         fontWeight: theme.typography.fontWeightMedium,
       },
     },
-    [`& .started`]: {
-      color: colors.blue[500],
-    },
     [`& .${treeItemClasses.expanded} .duration`]: {
       fontWeight: 'bold',
     },
   }))
+
+  let timeColor: string
+  if (duration > 0) timeColor = colors.blue[500]
+  else if (duration < 0) timeColor = colors.red[500]
+  else timeColor = 'inherit'
 
   return (
     <StyledTreeItem
@@ -44,9 +46,9 @@ const TaskTreeItem = ({ text, duration, timeRequired, ...other }: TaskTreeItemPr
           >{text}
           </Typography>
           <Typography
-            className={`duration ${duration > 0 ? 'started' : ''}`}
+            className="duration"
             variant="caption"
-            color="inherit"
+            color={timeColor}
           >{timeRequired - duration}/{timeRequired}
           </Typography>
         </Box>

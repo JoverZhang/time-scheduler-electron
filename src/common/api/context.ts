@@ -25,6 +25,7 @@ interface RawTask {
 interface RawLog {
   taskId: number
   duration: number
+  remarks: string
   createdAt: string
 }
 
@@ -47,6 +48,7 @@ export interface Task {
 export interface Log {
   task: Task
   duration: number
+  remarks: string
   createdAt: Date
 }
 
@@ -100,6 +102,7 @@ function convertToContext(raw: Raw): [LocalException | null, Context] {
     const log: Log = {
       task,
       duration: rawLog.duration,
+      remarks: rawLog.remarks,
       createdAt: new Date(rawLog.createdAt),
     }
 
@@ -154,6 +157,7 @@ function convertToRaw(context: Context): Raw {
     raw.logs.push({
       taskId: log.task.id,
       duration: log.duration,
+      remarks: log.remarks,
       createdAt: log.createdAt.toPrettyString(),
     })
   }

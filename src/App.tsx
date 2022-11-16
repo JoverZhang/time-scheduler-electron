@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { Button, createTheme, Grid, Stack, TextField, ThemeProvider, Typography } from '@mui/material'
+import { Button, colors, createTheme, Grid, Stack, TextField, ThemeProvider, Typography } from '@mui/material'
 import TreeNav from '@/modules/TreeNav'
 import {
   Timeline,
@@ -46,6 +46,7 @@ export default function App() {
 
 
   const [secondsStarted, setSecondsStarted] = useState<number>(0)
+  const [remarks, setRemarks] = useState<string>('')
   const [timer, setTimer] = useState<number | null>(null)
 
   const logs = context?.logs.slice(0, 10) ?? []
@@ -130,6 +131,7 @@ export default function App() {
     await contextApi.pushLog({
       task: curTask,
       duration,
+      remarks,
       createdAt: new Date(),
     })
     await updateContext()
@@ -171,6 +173,17 @@ export default function App() {
             <Stack mt={2} spacing={2} direction="row">
               <TextField
                 disabled={state !== State.STOPPED}
+                label="Remarks"
+                type="text"
+                variant="outlined"
+                value={remarks}
+                onChange={e => {
+                  setRemarks(e.target.value)
+                }}
+              />
+              <TextField
+                sx={{ width: 100 }}
+                disabled={state !== State.STOPPED}
                 label="Seconds"
                 type="number"
                 variant="outlined"
@@ -210,10 +223,12 @@ export default function App() {
           <Stack mt={2}>
             <Timeline position="alternate">
               {
-                logs.map(({ task, duration, createdAt }, i) =>
+                logs.map(({ task, duration, remarks, createdAt }, i) =>
                   <TimelineItem key={i}>
                     <TimelineOppositeContent color="text.secondary">
                       {createdAt.toPrettyString()}
+                      <br />
+                      {remarks}
                     </TimelineOppositeContent>
                     <TimelineSeparator>
                       <TimelineDot />
@@ -222,7 +237,10 @@ export default function App() {
                     <TimelineContent>
                       {task.title}
                       <br />
-                      <Typography color="text.secondary">{duration} min</Typography>
+                      <Typography
+                        color={duration > 0 ? colors.blue[500] : colors.red[500]}
+                      >{Math.abs(duration)} min
+                      </Typography>
                     </TimelineContent>
                   </TimelineItem>)
               }
